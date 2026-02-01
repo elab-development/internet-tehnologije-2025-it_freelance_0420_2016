@@ -8,23 +8,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // USERS (bez unique i bez FK).
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-
-            $table->string('name');
-            $table->string('email');          // unique se dodaje kasnije.
-            $table->string('password');
-
-            $table->string('role')->nullable();       // client | freelancer | admin (po potrebi).
-            $table->string('status')->nullable();     // active/inactive itd.
-            $table->string('image_url')->nullable();
-
-            $table->text('description')->nullable();
-            $table->text('skills')->nullable();
-
-            $table->rememberToken();
-            $table->timestamps();
+        // Dodaj dodatne kolone u POSTOJEĆU users tabelu (bez unique i FK).
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('role')->nullable()->after('password');
+            $table->string('status')->nullable()->after('role');
+            $table->string('image_url')->nullable()->after('status');
+            $table->text('description')->nullable()->after('image_url');
+            $table->text('skills')->nullable()->after('description');
         });
 
         // CATEGORIES (bez unique).
