@@ -1494,3 +1494,66 @@ body {
   color: var(--blue-1);
   font-weight: 900;
 }
+
+/* ===== Admin top lists polish ===== */
+
+.admin-topList {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 12px 0 0 !important;
+
+  display: grid;
+  gap: 10px;
+}
+
+.admin-topItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 10px 12px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 27, 45, 0.10);
+  box-shadow: 0 8px 24px rgba(15, 27, 45, 0.06);
+}
+
+.admin-topName {
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1.2;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-topBadge {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--blue-1);
+
+  background: rgba(79, 180, 255, 0.10);
+  border: 1px solid rgba(26, 111, 214, 0.16);
+
+  padding: 6px 10px;
+  border-radius: 999px;
+
+  min-width: 36px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.admin-topTitle {
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.admin-topBox {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 27, 45, 0.10);
+  box-shadow: 0 10px 30px rgba(15, 27, 45, 0.06);
+}

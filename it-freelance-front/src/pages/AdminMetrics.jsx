@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { Chart } from "react-google-charts";
 import { FiRefreshCcw, FiUsers, FiGrid, FiTag, FiStar } from "react-icons/fi";
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000/api";
+const API_BASE =
+  process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000/api";
 
 function pickMetrics(res) {
   const d = res?.data;
@@ -23,16 +25,13 @@ function pickMetrics(res) {
 function getCount(value) {
   if (value == null) return 0;
 
-  // number
   if (typeof value === "number") return value;
 
-  // string "12"
   if (typeof value === "string") {
     const n = Number(value);
     return Number.isFinite(n) ? n : 0;
   }
 
-  // object { total: 12 } / { count: 12 } / ...
   if (typeof value === "object") {
     const keysToTry = ["total", "count", "value", "projects", "offers", "reviews"];
     for (const k of keysToTry) {
@@ -104,15 +103,47 @@ export default function AdminMetrics() {
   const usersFreelancers = usersObj ? getCount(usersObj.freelancers) : 0;
   const usersAdmins = usersObj ? getCount(usersObj.admins) : 0;
 
-  // Projects/Offers/Reviews sada sigurno čita i string i object i number
   const projects = getCount(metrics?.projects);
   const offers = getCount(metrics?.offers);
   const reviews = getCount(metrics?.reviews);
 
   const top = metrics?.top || {};
-  const categoriesByProjects = Array.isArray(top?.categories_by_projects) ? top.categories_by_projects : [];
-  const freelancersByReviews = Array.isArray(top?.freelancers_by_reviews) ? top.freelancers_by_reviews : [];
-  const clientsByProjects = Array.isArray(top?.clients_by_projects) ? top.clients_by_projects : [];
+  const categoriesByProjects = Array.isArray(top?.categories_by_projects)
+    ? top.categories_by_projects
+    : [];
+  const freelancersByReviews = Array.isArray(top?.freelancers_by_reviews)
+    ? top.freelancers_by_reviews
+    : [];
+  const clientsByProjects = Array.isArray(top?.clients_by_projects)
+    ? top.clients_by_projects
+    : [];
+
+  // =========================
+  // GOOGLE CHARTS DATA
+  // =========================
+
+  const usersPieData = useMemo(() => {
+    return [
+      ["Role", "Count"],
+      ["Clients", usersClients],
+      ["Freelancers", usersFreelancers],
+      ["Admins", usersAdmins],
+    ];
+  }, [usersClients, usersFreelancers, usersAdmins]);
+
+  const categoriesBarData = useMemo(() => {
+    const rows = categoriesByProjects.map((x) => [x.name, getCount(x.project_count)]);
+    return [["Category", "Projects"], ...rows];
+  }, [categoriesByProjects]);
+
+  const totalsColumnData = useMemo(() => {
+    return [
+      ["Metric", "Count"],
+      ["Projects", projects],
+      ["Offers", offers],
+      ["Reviews", reviews],
+    ];
+  }, [projects, offers, reviews]);
 
   return (
     <div className="admin-page">
@@ -122,6 +153,10 @@ export default function AdminMetrics() {
             <div>
               <h2 className="admin-title">Admin Metrics</h2>
             </div>
+
+            <button className="admin-btn" type="button" onClick={loadMetrics} disabled={loading}>
+              <FiRefreshCcw /> Refresh
+            </button>
           </div>
 
           {msg ? <div className="admin-alert">{msg}</div> : null}
@@ -166,9 +201,78 @@ export default function AdminMetrics() {
                 </div>
               </div>
 
-              <div className="admin-topGrid">
+              {/* =========================
+                  CHARTS SECTION
+                 ========================= */}
+              <div className="admin-topGrid" style={{ marginTop: 14 }}>
                 <div className="admin-topBox">
-                  <div className="admin-topTitle">Top categories by projects</div>
+                  <div className="admin-topTitle">Users by role (Pie)</div>
+
+                  {!usersObj ? (
+                    <p className="admin-muted">Backend ne vraća users breakdown.</p>
+                  ) : (
+                    <div style={{ height: 280 }}>
+                      <Chart
+                        chartType="PieChart"
+                        width="100%"
+                        height="280px"
+                        data={usersPieData}
+                        options={{
+                          legend: { position: "right" },
+                          chartArea: { width: "90%", height: "90%" },
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="admin-topBox">
+                  <div className="admin-topTitle">Top categories by projects (Bar)</div>
+
+                  {categoriesByProjects.length === 0 ? (
+                    <p className="admin-muted">Nema podataka.</p>
+                  ) : (
+                    <div style={{ height: 300 }}>
+                      <Chart
+                        chartType="BarChart"
+                        width="100%"
+                        height="300px"
+                        data={categoriesBarData}
+                        options={{
+                          legend: { position: "none" },
+                          chartArea: { width: "70%", height: "75%" },
+                          hAxis: { minValue: 0 },
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="admin-topBox">
+                  <div className="admin-topTitle">Totals (Column)</div>
+
+                  <div style={{ height: 300 }}>
+                    <Chart
+                      chartType="ColumnChart"
+                      width="100%"
+                      height="300px"
+                      data={totalsColumnData}
+                      options={{
+                        legend: { position: "none" },
+                        chartArea: { width: "80%", height: "70%" },
+                        vAxis: { minValue: 0 },
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* =========================
+                  LISTS (existing)
+                 ========================= */}
+              <div className="admin-topGrid" style={{ marginTop: 14 }}>
+                <div className="admin-topBox">
+                  <div className="admin-topTitle">Top categories by projects (List)</div>
                   {categoriesByProjects.length === 0 ? (
                     <p className="admin-muted">Nema podataka.</p>
                   ) : (
@@ -193,6 +297,23 @@ export default function AdminMetrics() {
                         <li key={x.id} className="admin-topItem">
                           <span className="admin-topName">{x.name}</span>
                           <span className="admin-topBadge">{getCount(x.projects_count)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Ako želiš i ovo kao listu (trenutno si ga parsirala, ali ga nisi renderovala). */}
+                <div className="admin-topBox">
+                  <div className="admin-topTitle">Top freelancers by reviews</div>
+                  {freelancersByReviews.length === 0 ? (
+                    <p className="admin-muted">Nema podataka.</p>
+                  ) : (
+                    <ul className="admin-topList">
+                      {freelancersByReviews.map((x) => (
+                        <li key={x.id} className="admin-topItem">
+                          <span className="admin-topName">{x.name}</span>
+                          <span className="admin-topBadge">{getCount(x.reviews_count)}</span>
                         </li>
                       ))}
                     </ul>
