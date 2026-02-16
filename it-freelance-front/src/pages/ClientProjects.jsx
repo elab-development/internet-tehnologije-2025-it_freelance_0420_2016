@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { FiSearch, FiEye, FiX, FiSend } from "react-icons/fi";
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000/api";
+const API_BASE =
+  process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000/api";
 
 function normalizeList(res) {
   const d = res?.data;
@@ -51,13 +52,13 @@ export default function ClientProjects() {
   const [reviews, setReviews] = useState([]);
 
   // Review form
-  const [freelancerId, setFreelancerId] = useState(""); //  NOVO
+  const [freelancerId, setFreelancerId] = useState("");
   const [grade, setGrade] = useState(5);
   const [comment, setComment] = useState("");
   const [sendingReview, setSendingReview] = useState(false);
   const [reviewMsg, setReviewMsg] = useState("");
 
-  //  NOVO: Izvuci freelancere iz offers (bez duplikata).
+  // Izvuci freelancere iz offers (bez duplikata).
   const freelancerOptions = useMemo(() => {
     const map = new Map();
 
@@ -97,7 +98,7 @@ export default function ClientProjects() {
     setReviews([]);
     setReviewMsg("");
 
-    //  reset forme kad se promeni projekat
+    // reset forme kad se promeni projekat
     setFreelancerId("");
     setGrade(5);
     setComment("");
@@ -132,7 +133,6 @@ export default function ClientProjects() {
     }
     if (!selectedId) return;
 
-    //  bitno: freelancer mora biti izabran
     if (!freelancerId) {
       setReviewMsg("Moraš da izabereš freelancera (iz ponuda) pre slanja review-a.");
       return;
@@ -143,8 +143,8 @@ export default function ClientProjects() {
       await api.post(`/projects/${selectedId}/reviews`, {
         grade: Number(grade),
         comment: comment || null,
-        freelancer_id: Number(freelancerId), //  KLJUČNO
-        date_and_time: nowMysql(), //  ako backend traži, ovo rešava
+        freelancer_id: Number(freelancerId),
+        date_and_time: nowMysql(),
       });
 
       setComment("");
@@ -155,12 +155,10 @@ export default function ClientProjects() {
       const rRes = await api.get(`/projects/${selectedId}/reviews`);
       setReviews(normalizeList(rRes));
     } catch (e) {
-      //  Prikaži stvarne Laravel validation errors (422).
       const msg = e?.response?.data?.message;
       const errs = e?.response?.data?.errors;
 
       if (errs) {
-        // Pretvori errors u čitljiv string.
         const flat = Object.entries(errs)
           .map(([k, arr]) => `${k}: ${Array.isArray(arr) ? arr.join(", ") : String(arr)}`)
           .join(" | ");
@@ -185,10 +183,19 @@ export default function ClientProjects() {
     return projects.filter((p) => {
       const n = (p?.name || "").toLowerCase();
       const d = (p?.description || "").toLowerCase();
-      const c = (p?.category?.name || "").toLowerCase();
+      const c = (p?.category?.name || p?.category_name || "").toLowerCase();
       return n.includes(q) || d.includes(q) || c.includes(q);
     });
   }, [projects, query]);
+
+  const pillBase = {
+    fontSize: 12,
+    fontWeight: 900,
+    padding: "6px 10px",
+    borderRadius: 999,
+    height: "fit-content",
+    whiteSpace: "nowrap",
+  };
 
   return (
     <div className="home-page">
@@ -223,42 +230,56 @@ export default function ClientProjects() {
                 <p style={{ color: "var(--muted)" }}>Nema projekata za prikaz.</p>
               ) : (
                 <div className="cards" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
-                  {filtered.map((p) => (
-                    <div key={p.id} className="card">
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                        <h3 className="card-title" style={{ marginRight: 8 }}>
-                          {p?.name || "Untitled project"}
-                        </h3>
-                        {p?.status ? (
+                  {filtered.map((p) => {
+                    const catName = p?.category?.name || p?.category_name || null;
+
+                    return (
+                      <div key={p.id} className="card">
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                          <h3 className="card-title" style={{ marginRight: 8, marginBottom: 0 }}>
+                            {p?.name || "Untitled project"}
+                          </h3>
+
+                          {p?.status ? (
+                            <span
+                              style={{
+                                ...pillBase,
+                                color: "var(--blue-1)",
+                                background: "rgba(79, 180, 255, 0.10)",
+                                border: "1px solid rgba(26, 111, 214, 0.14)",
+                              }}
+                            >
+                              {p.status}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {/* KATEGORIJA (u kartici) */}
+                        <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
                           <span
                             style={{
-                              fontSize: 12,
-                              fontWeight: 900,
-                              color: "var(--blue-1)",
-                              background: "rgba(79, 180, 255, 0.10)",
-                              border: "1px solid rgba(26, 111, 214, 0.14)",
-                              padding: "6px 10px",
-                              borderRadius: 999,
-                              height: "fit-content",
-                              whiteSpace: "nowrap",
+                              ...pillBase,
+                              color: "rgba(15,27,45,0.85)",
+                              background: "rgba(15,27,45,0.06)",
+                              border: "1px solid rgba(15,27,45,0.10)",
                             }}
                           >
-                            {p.status}
+                            {catName || "No category"}
                           </span>
-                        ) : null}
-                      </div>
+                        </div>
 
-                      <p className="card-text" style={{ marginTop: 8 }}>
-                        {p?.description ? p.description : "Nema opisa."}
-                      </p>
+                        <p className="card-text" style={{ marginTop: 8 }}>
+                          {p?.description ? p.description : "Nema opisa."}
+                        </p>
 
-                      <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                        <button className="btn-ghost" type="button" onClick={() => loadProjectBundle(p.id)}>
-                          <FiEye /> Details
-                        </button>
+                        <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                          <button className="btn-ghost" type="button" onClick={() => loadProjectBundle(p.id)}>
+                            <FiEye /> Details
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -289,6 +310,34 @@ export default function ClientProjects() {
                   <>
                     <div style={{ marginTop: 10 }}>
                       <div style={{ fontWeight: 900 }}>{projectDetails?.name}</div>
+
+                      {/* KATEGORIJA i STATUS i u details (opciono, ali korisno). */}
+                      <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <span
+                          style={{
+                            ...pillBase,
+                            color: "rgba(15,27,45,0.85)",
+                            background: "rgba(15,27,45,0.06)",
+                            border: "1px solid rgba(15,27,45,0.10)",
+                          }}
+                        >
+                          {projectDetails?.category?.name || projectDetails?.category_name || "No category"}
+                        </span>
+
+                        {projectDetails?.status ? (
+                          <span
+                            style={{
+                              ...pillBase,
+                              color: "var(--blue-1)",
+                              background: "rgba(79, 180, 255, 0.10)",
+                              border: "1px solid rgba(26, 111, 214, 0.14)",
+                            }}
+                          >
+                            {projectDetails.status}
+                          </span>
+                        ) : null}
+                      </div>
+
                       <div className="card-text" style={{ marginTop: 6 }}>
                         {projectDetails?.description || "Nema opisa."}
                       </div>
@@ -365,7 +414,6 @@ export default function ClientProjects() {
                       ) : null}
 
                       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                        {/*  NOVO: freelancer select */}
                         <div className="input-wrap" style={{ minWidth: 240 }}>
                           <select
                             className="input select"

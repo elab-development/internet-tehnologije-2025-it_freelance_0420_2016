@@ -61,7 +61,6 @@ export default function Menu() {
     if (role === "admin") {
       return [
         { to: "/admin", label: "Home", icon: <FiHome /> },
-        { to: "/admin/projects", label: "Projects", icon: <FiGrid /> }, // GET /projects
         { to: "/admin/categories", label: "Categories", icon: <FiTag /> }, // GET /categories + admin CRUD
         { to: "/admin/metrics", label: "Metrics", icon: <FiBarChart2 /> }, // GET /metrics/dashboard
       ];
