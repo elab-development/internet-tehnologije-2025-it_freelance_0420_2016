@@ -1,0 +1,1049 @@
+openapi: 3.0.3
+
+info:
+  title: IT Freelance API
+  version: 1.0.0
+  description: >
+    OpenAPI specifikacija za IT Freelance (Laravel + Sanctum). Base path: /api.
+    Swagger UI je podešen tako da možeš da uneseš odvojene tokene za client, freelancer i admin ulogu.
+
+servers:
+  - url: /api
+    description: Laravel API base
+
+tags:
+  - name: Auth
+  - name: Public
+  - name: Client
+  - name: Freelancer
+  - name: Admin
+
+components:
+  securitySchemes:
+    clientBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: "Client token. Header: Authorization: Bearer {token}."
+    freelancerBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: "Freelancer token. Header: Authorization: Bearer {token}."
+    adminBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: "Admin token. Header: Authorization: Bearer {token}."
+
+  schemas:
+    LaravelErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Samo admin može da kreira kategorije."
+      required: [message]
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The given data was invalid."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      required: [message, errors]
+
+    SuccessNullResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Uspešno." }
+        data: { nullable: true }
+      required: [success, message, data]
+
+    User:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        name: { type: string, example: "Ana Anić" }
+        email: { type: string, format: email, example: "ana@email.com" }
+        role:
+          type: string
+          enum: [client, freelancer, admin]
+          example: client
+        status:
+          type: string
+          nullable: true
+          example: "active"
+        image_url:
+          type: string
+          nullable: true
+          example: "https://i.ibb.co/xyz/avatar.png"
+        description:
+          type: string
+          nullable: true
+          example: "Full-stack developer."
+        skills:
+          type: array
+          items: { type: string }
+          example: ["React", "Laravel", "MySQL"]
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-02-16T10:00:00Z"
+      required: [id, name, email, role, created_at]
+
+    Category:
+      type: object
+      properties:
+        id: { type: integer, example: 10 }
+        name: { type: string, example: "Web Development" }
+      required: [id, name]
+
+    Project:
+      type: object
+      properties:
+        id: { type: integer, example: 100 }
+        name: { type: string, example: "Landing page" }
+        description: { type: string, nullable: true, example: "Potrebna izrada landing stranice." }
+        budget: { type: number, nullable: true, example: 1200 }
+        status: { type: string, example: "open" }
+        image_url: { type: string, nullable: true, example: "https://i.ibb.co/xyz/project.png" }
+        created_at: { type: string, format: date-time, example: "2026-02-16T10:00:00Z" }
+        category:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/Category"
+        client:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/User"
+      required: [id, name, status, created_at]
+
+    Offer:
+      type: object
+      properties:
+        id: { type: integer, example: 501 }
+        price: { type: number, example: 999 }
+        comment: { type: string, nullable: true, example: "Mogu da završim za 7 dana." }
+        status: { type: string, example: "pending" }
+        date_and_time: { type: string, format: date-time, example: "2026-02-16T10:00:00Z" }
+        freelancer:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/User"
+        project:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/Project"
+      required: [id, price, status, date_and_time]
+
+    Review:
+      type: object
+      properties:
+        id: { type: integer, example: 701 }
+        grade: { type: integer, minimum: 1, maximum: 5, example: 5 }
+        comment: { type: string, nullable: true, example: "Odličan freelancer." }
+        date_and_time: { type: string, format: date-time, example: "2026-02-16T10:00:00Z" }
+        client:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/User"
+        freelancer:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/User"
+        project:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/Project"
+      required: [id, grade, date_and_time]
+
+    AuthPayload:
+      type: object
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        token: { type: string, example: "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" }
+      required: [user, token]
+
+    AuthSuccessResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Prijava uspešna." }
+        data:
+          type: object
+          properties:
+            user: { $ref: "#/components/schemas/User" }
+            token: { type: string, example: "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" }
+          required: [user, token]
+      required: [success, message, data]
+
+    MeSuccessResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Ulogovani korisnik." }
+        data:
+          type: object
+          properties:
+            user: { $ref: "#/components/schemas/User" }
+          required: [user]
+      required: [success, message, data]
+
+    CategoriesListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Lista kategorija." }
+        data:
+          type: object
+          properties:
+            categories:
+              type: array
+              items: { $ref: "#/components/schemas/Category" }
+          required: [categories]
+      required: [success, message, data]
+
+    CategorySuccessResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Kategorija kreirana." }
+        data:
+          type: object
+          properties:
+            category: { $ref: "#/components/schemas/Category" }
+          required: [category]
+      required: [success, message, data]
+
+    ProjectsListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Lista projekata." }
+        data:
+          type: object
+          properties:
+            projects:
+              type: array
+              items: { $ref: "#/components/schemas/Project" }
+          required: [projects]
+      required: [success, message, data]
+
+    ProjectSuccessResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Detalji projekta." }
+        data:
+          type: object
+          properties:
+            project: { $ref: "#/components/schemas/Project" }
+          required: [project]
+      required: [success, message, data]
+
+    OffersByProjectResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Lista ponuda za projekat." }
+        data:
+          type: object
+          properties:
+            project_id: { type: integer, example: 100 }
+            offers:
+              type: array
+              items: { $ref: "#/components/schemas/Offer" }
+          required: [project_id, offers]
+      required: [success, message, data]
+
+    OfferSuccessResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Ponuda poslata." }
+        data:
+          type: object
+          properties:
+            offer: { $ref: "#/components/schemas/Offer" }
+          required: [offer]
+      required: [success, message, data]
+
+    ReviewsByProjectResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Lista utisaka za projekat." }
+        data:
+          type: object
+          properties:
+            project_id: { type: integer, example: 100 }
+            reviews:
+              type: array
+              items: { $ref: "#/components/schemas/Review" }
+          required: [project_id, reviews]
+      required: [success, message, data]
+
+    ReviewSuccessResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Review dodat." }
+        data:
+          type: object
+          properties:
+            review: { $ref: "#/components/schemas/Review" }
+          required: [review]
+      required: [success, message, data]
+
+    Metrics:
+      type: object
+      properties:
+        users:
+          type: object
+          properties:
+            total: { type: integer, example: 20 }
+            clients: { type: integer, example: 10 }
+            freelancers: { type: integer, example: 8 }
+            admins: { type: integer, example: 2 }
+          required: [total, clients, freelancers, admins]
+        projects:
+          type: object
+          properties:
+            total: { type: integer, example: 15 }
+            by_status:
+              type: array
+              items:
+                type: object
+                properties:
+                  status: { type: string, example: "open" }
+                  total: { type: integer, example: 7 }
+                required: [status, total]
+          required: [total, by_status]
+        offers:
+          type: object
+          properties:
+            total: { type: integer, example: 33 }
+            avg_price: { type: number, example: 850.5 }
+            by_status:
+              type: array
+              items:
+                type: object
+                properties:
+                  status: { type: string, example: "pending" }
+                  total: { type: integer, example: 20 }
+                required: [status, total]
+          required: [total, avg_price, by_status]
+        reviews:
+          type: object
+          properties:
+            total: { type: integer, example: 11 }
+            avg_grade: { type: number, example: 4.6 }
+          required: [total, avg_grade]
+        top:
+          type: object
+          properties:
+            categories_by_projects:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: { type: integer, example: 1 }
+                  name: { type: string, example: "Web Development" }
+                  projects_count: { type: integer, example: 6 }
+                required: [id, name, projects_count]
+            freelancers_by_grade:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: { type: integer, example: 3 }
+                  name: { type: string, example: "Milan" }
+                  avg_grade: { type: number, example: 4.8 }
+                  reviews_count: { type: integer, example: 5 }
+                required: [id, name, avg_grade, reviews_count]
+            clients_by_projects:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: { type: integer, example: 2 }
+                  name: { type: string, example: "Ana" }
+                  projects_count: { type: integer, example: 4 }
+                required: [id, name, projects_count]
+          required: [categories_by_projects, freelancers_by_grade, clients_by_projects]
+      required: [users, projects, offers, reviews, top]
+
+    MetricsDashboardResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Dashboard metrike." }
+        data:
+          type: object
+          properties:
+            metrics: { $ref: "#/components/schemas/Metrics" }
+          required: [metrics]
+      required: [success, message, data]
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register (client or freelancer)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 2, maxLength: 150 }
+                email: { type: string, format: email, maxLength: 150 }
+                password: { type: string, minLength: 6, maxLength: 255 }
+                role: { type: string, enum: [client, freelancer] }
+              required: [name, email, password, role]
+            examples:
+              register_client:
+                summary: Register client
+                value:
+                  name: "Client User"
+                  email: "client@example.com"
+                  password: "password"
+                  role: "client"
+              register_freelancer:
+                summary: Register freelancer
+                value:
+                  name: "Freelancer User"
+                  email: "freelancer@example.com"
+                  password: "password"
+                  role: "freelancer"
+      responses:
+        "201":
+          description: Created (user + token)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSuccessResponse" }
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login (client / freelancer / admin)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email, maxLength: 150 }
+                password: { type: string, maxLength: 255 }
+              required: [email, password]
+            examples:
+              login_client:
+                summary: Login client
+                value: { email: "client@example.com", password: "password" }
+              login_freelancer:
+                summary: Login freelancer
+                value: { email: "freelancer@example.com", password: "password" }
+              login_admin:
+                summary: Login admin
+                value: { email: "admin@itfreelance.com", password: "adminpassword" }
+      responses:
+        "200":
+          description: Success (user + token)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSuccessResponse" }
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get logged-in user (any role)
+      security:
+        - clientBearer: []
+        - freelancerBearer: []
+        - adminBearer: []
+      responses:
+        "200":
+          description: Me
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeSuccessResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (any role)
+      security:
+        - clientBearer: []
+        - freelancerBearer: []
+        - adminBearer: []
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessNullResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+
+  /categories:
+    get:
+      tags: [Public]
+      summary: List categories (public)
+      security: []
+      responses:
+        "200":
+          description: Categories list
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CategoriesListResponse" }
+
+    post:
+      tags: [Admin]
+      summary: Create category (admin)
+      security:
+        - adminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 2, maxLength: 100 }
+              required: [name]
+            examples:
+              create_category:
+                value: { name: "Web Development" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CategorySuccessResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /categories/{category}:
+    put:
+      tags: [Admin]
+      summary: Update category (admin)
+      security:
+        - adminBearer: []
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 2, maxLength: 100 }
+              required: [name]
+            examples:
+              update_category:
+                value: { name: "Updated Category" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CategorySuccessResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+    delete:
+      tags: [Admin]
+      summary: Delete category (admin)
+      security:
+        - adminBearer: []
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessNullResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+
+  /projects:
+    get:
+      tags: [Public]
+      summary: List projects (public)
+      security: []
+      responses:
+        "200":
+          description: Projects list
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectsListResponse" }
+
+    post:
+      tags: [Client]
+      summary: Create project (client)
+      security:
+        - clientBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 2, maxLength: 150 }
+                description: { type: string, nullable: true, maxLength: 5000 }
+                budget: { type: number, nullable: true, minimum: 0 }
+                status: { type: string, nullable: true, maxLength: 50 }
+                image_url: { type: string, nullable: true, maxLength: 255 }
+                category_id: { type: integer }
+              required: [name, category_id]
+            examples:
+              create_project:
+                value:
+                  name: "Client Project"
+                  description: "Opis projekta"
+                  budget: 1200
+                  status: "open"
+                  image_url: null
+                  category_id: 1
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectSuccessResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden (not client)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /projects/{project}:
+    get:
+      tags: [Public]
+      summary: Show project (public)
+      security: []
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectSuccessResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+
+    put:
+      tags: [Client]
+      summary: Update project (client owner)
+      security:
+        - clientBearer: []
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: "PUT used as partial update (controller validates fields as 'sometimes')."
+              properties:
+                name: { type: string, minLength: 2, maxLength: 150 }
+                description: { type: string, nullable: true, maxLength: 5000 }
+                budget: { type: number, nullable: true, minimum: 0 }
+                status: { type: string, nullable: true, maxLength: 50 }
+                image_url: { type: string, nullable: true, maxLength: 255 }
+                category_id: { type: integer }
+            examples:
+              update_project:
+                value:
+                  name: "Updated Project"
+                  description: "Ažuriran opis"
+                  budget: 1500
+                  status: "in_progress"
+                  image_url: null
+                  category_id: 1
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectSuccessResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden (not owner / not client)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+    delete:
+      tags: [Client]
+      summary: Delete project (client owner)
+      security:
+        - clientBearer: []
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessNullResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+
+  /projects/{project}/offers:
+    get:
+      tags: [Public]
+      summary: List offers for project (public)
+      security: []
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Offers list
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OffersByProjectResponse" }
+
+    post:
+      tags: [Freelancer]
+      summary: Create offer for project (freelancer)
+      security:
+        - freelancerBearer: []
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                price: { type: number, minimum: 0 }
+                comment: { type: string, nullable: true, maxLength: 3000 }
+              required: [price]
+            examples:
+              create_offer:
+                value:
+                  price: 999
+                  comment: "Mogu da završim za 7 dana."
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OfferSuccessResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden (not freelancer)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /offers/{offer}:
+    put:
+      tags: [Freelancer]
+      summary: Update offer (freelancer owner)
+      security:
+        - freelancerBearer: []
+      parameters:
+        - name: offer
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                price: { type: number, minimum: 0 }
+                comment: { type: string, nullable: true, maxLength: 3000 }
+            examples:
+              update_offer:
+                value:
+                  price: 850
+                  comment: "Snižena ponuda."
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OfferSuccessResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden (not owner / not freelancer)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+    delete:
+      tags: [Freelancer]
+      summary: Delete offer (freelancer owner)
+      security:
+        - freelancerBearer: []
+      parameters:
+        - name: offer
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessNullResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+
+  /projects/{project}/reviews:
+    get:
+      tags: [Public]
+      summary: List reviews for project (public)
+      security: []
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Reviews list
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReviewsByProjectResponse" }
+
+    post:
+      tags: [Client]
+      summary: Add review to project (client owner)
+      security:
+        - clientBearer: []
+      parameters:
+        - name: project
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                freelancer_id: { type: integer }
+                grade: { type: integer, minimum: 1, maximum: 5 }
+                comment: { type: string, nullable: true, maxLength: 3000 }
+              required: [freelancer_id, grade]
+            examples:
+              add_review:
+                value:
+                  freelancer_id: 3
+                  grade: 5
+                  comment: "Odličan freelancer."
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReviewSuccessResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden (not owner / not client)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "422":
+          description: Validation / business error (freelancer has no offer, etc.)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationErrorResponse"
+                  - type: object
+                    properties:
+                      success: { type: boolean, example: false }
+                      message: { type: string, example: "Ne možeš ostaviti review za ovog freelancera." }
+                      errors:
+                        type: object
+                        additionalProperties:
+                          type: array
+                          items: { type: string }
+                    required: [success, message, errors]
+
+  /metrics/dashboard:
+    get:
+      tags: [Admin]
+      summary: Metrics dashboard (admin)
+      security:
+        - adminBearer: []
+      responses:
+        "200":
+          description: Metrics dashboard
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MetricsDashboardResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
+        "403":
+          description: Forbidden (not admin)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaravelErrorResponse" }
