@@ -1,3 +1,5 @@
+import HomeSuccessStory from "../components/HomeSuccessStory";
+
 export default function FreelancerHome() {
   const user = JSON.parse(sessionStorage.getItem("user") || "null");
 
@@ -30,6 +32,9 @@ export default function FreelancerHome() {
             <img className="hero-img" src="/images/freelancer.png" alt="Freelancer" />
           </div>
         </section>
+
+        {/* NOVO: Success stories sekcija. */}
+        <HomeSuccessStory />
       </div>
     </div>
   );
