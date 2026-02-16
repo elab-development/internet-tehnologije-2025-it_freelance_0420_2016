@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import {
-  FiSearch,
-  FiEye,
-  FiX,
-  FiSend,
-  FiTrash2,
-  FiRefreshCcw,
-} from "react-icons/fi";
+import { FiSearch, FiEye, FiX, FiSend, FiTrash2 } from "react-icons/fi";
 
 const API_BASE =
   process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000/api";
@@ -87,11 +80,7 @@ export default function FreelancerProjects() {
   const loadMe = async () => {
     // GET /auth/me (protected)
     const res = await api.get("/auth/me");
-    const u =
-      res?.data?.data?.user ||
-      res?.data?.data ||
-      res?.data?.user ||
-      null;
+    const u = res?.data?.data?.user || res?.data?.data || res?.data?.user || null;
     setMe(u);
     return u;
   };
@@ -184,7 +173,9 @@ export default function FreelancerProjects() {
         }
       }
     } catch (e) {
-      setDetailsError("Ne mogu da učitam detalje/offers/reviews. Proveri backend rute.");
+      setDetailsError(
+        "Ne mogu da učitam detalje/offers/reviews. Proveri backend rute."
+      );
     } finally {
       setDetailsLoading(false);
     }
@@ -223,7 +214,8 @@ export default function FreelancerProjects() {
     setOfferMsg("");
 
     if (!token) return setOfferMsg("Moraš biti ulogovana.");
-    if (role !== "freelancer") return setOfferMsg("Samo freelancer može da šalje ponude.");
+    if (role !== "freelancer")
+      return setOfferMsg("Samo freelancer može da šalje ponude.");
     if (!selectedId) return setOfferMsg("Izaberi projekat prvo.");
 
     if (price === "" || Number.isNaN(Number(price))) {
@@ -273,7 +265,10 @@ export default function FreelancerProjects() {
 
       if (errs) {
         const flat = Object.entries(errs)
-          .map(([k, arr]) => `${k}: ${Array.isArray(arr) ? arr.join(", ") : String(arr)}`)
+          .map(
+            ([k, arr]) =>
+              `${k}: ${Array.isArray(arr) ? arr.join(", ") : String(arr)}`
+          )
           .join(" | ");
         setOfferMsg(`${msg} ${flat}`);
       } else {
@@ -288,7 +283,8 @@ export default function FreelancerProjects() {
     setOfferMsg("");
 
     if (!token) return setOfferMsg("Moraš biti ulogovana.");
-    if (role !== "freelancer") return setOfferMsg("Samo freelancer može da briše ponude.");
+    if (role !== "freelancer")
+      return setOfferMsg("Samo freelancer može da briše ponude.");
     if (!myOffer?.id) return setOfferMsg("Nemaš ponudu za brisanje.");
 
     if (!window.confirm("Da li sigurno želiš da obrišeš svoju ponudu?")) return;
@@ -324,7 +320,7 @@ export default function FreelancerProjects() {
     return projects.filter((p) => {
       const n = (p?.name || "").toLowerCase();
       const d = (p?.description || "").toLowerCase();
-      const c = (p?.category?.name || "").toLowerCase();
+      const c = (p?.category?.name || p?.category_name || "").toLowerCase();
       return n.includes(q) || d.includes(q) || c.includes(q);
     });
   }, [projects, query]);
@@ -347,7 +343,14 @@ export default function FreelancerProjects() {
       <div className="home-shell">
         <div className="auth-card" style={{ maxWidth: 1100 }}>
           {/* HEADER */}
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
             <div>
               <h2 style={{ margin: 0 }}>Freelancer Projects</h2>
               <p style={{ marginTop: 6, color: "var(--muted)" }}>
@@ -356,7 +359,11 @@ export default function FreelancerProjects() {
             </div>
           </div>
 
-          {error ? <div className="alert" style={{ marginTop: 12 }}>{error}</div> : null}
+          {error ? (
+            <div className="alert" style={{ marginTop: 12 }}>
+              {error}
+            </div>
+          ) : null}
 
           {/* SEARCH */}
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
@@ -372,7 +379,14 @@ export default function FreelancerProjects() {
           </div>
 
           {/* CONTENT GRID */}
-          <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 0.95fr", gap: 12 }}>
+          <div
+            style={{
+              marginTop: 14,
+              display: "grid",
+              gridTemplateColumns: "1fr 0.95fr",
+              gap: 12,
+            }}
+          >
             {/* LEFT: PROJECT LIST */}
             <div>
               {loading ? (
@@ -381,43 +395,65 @@ export default function FreelancerProjects() {
                 <p style={{ color: "var(--muted)" }}>Nema projekata za prikaz.</p>
               ) : (
                 <div className="cards" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
-                  {filtered.map((p) => (
-                    <div key={p.id} className="card">
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                        <h3 className="card-title" style={{ margin: 0 }}>
-                          {p?.name || "Untitled project"}
-                        </h3>
+                  {filtered.map((p) => {
+                    const catName = p?.category?.name || p?.category_name || null;
 
-                        {p?.status ? (
+                    return (
+                      <div key={p.id} className="card">
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                          <h3 className="card-title" style={{ margin: 0 }}>
+                            {p?.name || "Untitled project"}
+                          </h3>
+
+                          {p?.status ? (
+                            <span
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 900,
+                                color: "var(--blue-1)",
+                                background: "rgba(79, 180, 255, 0.10)",
+                                border: "1px solid rgba(26, 111, 214, 0.14)",
+                                padding: "6px 10px",
+                                borderRadius: 999,
+                                height: "fit-content",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {p.status}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {/* KATEGORIJA (u kartici) */}
+                        <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
                           <span
                             style={{
                               fontSize: 12,
                               fontWeight: 900,
-                              color: "var(--blue-1)",
-                              background: "rgba(79, 180, 255, 0.10)",
-                              border: "1px solid rgba(26, 111, 214, 0.14)",
+                              color: "rgba(15,27,45,0.85)",
+                              background: "rgba(15,27,45,0.06)",
+                              border: "1px solid rgba(15,27,45,0.10)",
                               padding: "6px 10px",
                               borderRadius: 999,
-                              height: "fit-content",
                               whiteSpace: "nowrap",
                             }}
                           >
-                            {p.status}
+                            {catName || "No category"}
                           </span>
-                        ) : null}
-                      </div>
+                        </div>
 
-                      <p className="card-text" style={{ marginTop: 8 }}>
-                        {p?.description || "Nema opisa."}
-                      </p>
+                        <p className="card-text" style={{ marginTop: 8 }}>
+                          {p?.description || "Nema opisa."}
+                        </p>
 
-                      <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                        <button className="btn-ghost" type="button" onClick={() => openProject(p.id)}>
-                          <FiEye /> Details
-                        </button>
+                        <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                          <button className="btn-ghost" type="button" onClick={() => openProject(p.id)}>
+                            <FiEye /> Details
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -426,7 +462,9 @@ export default function FreelancerProjects() {
             <div>
               <div className="card" style={{ height: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <h3 className="card-title" style={{ margin: 0 }}>Project details</h3>
+                  <h3 className="card-title" style={{ margin: 0 }}>
+                    Project details
+                  </h3>
 
                   {selectedId ? (
                     <button className="btn-ghost" type="button" onClick={closeProject}>
@@ -444,12 +482,52 @@ export default function FreelancerProjects() {
                     Učitavam detalje + offers + reviews...
                   </p>
                 ) : detailsError ? (
-                  <div className="alert" style={{ marginTop: 12 }}>{detailsError}</div>
+                  <div className="alert" style={{ marginTop: 12 }}>
+                    {detailsError}
+                  </div>
                 ) : (
                   <>
                     {/* PROJECT SUMMARY */}
                     <div style={{ marginTop: 10 }}>
                       <div style={{ fontWeight: 900 }}>{projectDetails?.name}</div>
+
+                      {/* Opcionalno: i ovde pokaži kategoriju ako postoji. */}
+                      <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 900,
+                            color: "rgba(15,27,45,0.85)",
+                            background: "rgba(15,27,45,0.06)",
+                            border: "1px solid rgba(15,27,45,0.10)",
+                            padding: "6px 10px",
+                            borderRadius: 999,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {projectDetails?.category?.name ||
+                            projectDetails?.category_name ||
+                            "No category"}
+                        </span>
+
+                        {projectDetails?.status ? (
+                          <span
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 900,
+                              color: "var(--blue-1)",
+                              background: "rgba(79, 180, 255, 0.10)",
+                              border: "1px solid rgba(26, 111, 214, 0.14)",
+                              padding: "6px 10px",
+                              borderRadius: 999,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {projectDetails.status}
+                          </span>
+                        ) : null}
+                      </div>
+
                       <div className="card-text" style={{ marginTop: 6 }}>
                         {projectDetails?.description || "Nema opisa."}
                       </div>
@@ -457,7 +535,14 @@ export default function FreelancerProjects() {
 
                     {/* ===================== OFFER FORM (FREELANCER) ===================== */}
                     <div style={{ marginTop: 14 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 10,
+                        }}
+                      >
                         <div style={{ fontWeight: 900 }}>
                           {myOffer?.id ? "My offer (edit)" : "Create offer"}
                         </div>
@@ -479,7 +564,11 @@ export default function FreelancerProjects() {
                         ) : null}
                       </div>
 
-                      {offerMsg ? <div className="alert" style={{ marginTop: 10 }}>{offerMsg}</div> : null}
+                      {offerMsg ? (
+                        <div className="alert" style={{ marginTop: 10 }}>
+                          {offerMsg}
+                        </div>
+                      ) : null}
 
                       <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
                         <div className="input-wrap">
@@ -523,7 +612,8 @@ export default function FreelancerProjects() {
                             onClick={submitOffer}
                             disabled={!token || role !== "freelancer" || savingOffer}
                           >
-                            <FiSend /> {savingOffer ? "Saving..." : myOffer?.id ? "Update offer" : "Send offer"}
+                            <FiSend />{" "}
+                            {savingOffer ? "Saving..." : myOffer?.id ? "Update offer" : "Send offer"}
                           </button>
 
                           {myOffer?.id ? (
