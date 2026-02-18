@@ -21,9 +21,9 @@ services:
 
   backend:
     build:
-      context: ./it-freelance-api
+      context: ./it-freelance-back
       dockerfile: Dockerfile
-    container_name: it_freelance_api
+    container_name: it_freelance_back
     depends_on:
       mysql:
         condition: service_healthy
@@ -47,9 +47,9 @@ services:
 
   frontend:
     build:
-      context: ./it-freelance-frontend
+      context: ./it-freelance-front
       dockerfile: Dockerfile
-    container_name: it_freelance_frontend
+    container_name: it_freelance_front
     depends_on:
       - backend
     environment:
