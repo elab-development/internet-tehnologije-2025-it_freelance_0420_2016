@@ -1557,3 +1557,23 @@ body {
   border: 1px solid rgba(15, 27, 45, 0.10);
   box-shadow: 0 10px 30px rgba(15, 27, 45, 0.06);
 }
+
+.menu-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px; /* slightly “cube-like”, not a circle */
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.menu-user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
