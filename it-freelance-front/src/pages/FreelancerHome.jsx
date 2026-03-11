@@ -1,8 +1,9 @@
 import HomeSuccessStory from "../components/HomeSuccessStory";
+import { useNavigate } from "react-router-dom"
 
 export default function FreelancerHome() {
   const user = JSON.parse(sessionStorage.getItem("user") || "null");
-
+  const navigate = useNavigate();
   return (
     <div className="home-page">
       <div className="home-shell">
@@ -22,7 +23,7 @@ export default function FreelancerHome() {
             </p>
 
             <div className="hero-actions">
-              <button className="btn-primary" type="button">
+              <button className="btn-primary" type="button" onClick={() => navigate("/freelancer/projects", { replace: true })}>
                 Pregledaj projekte
               </button>
             </div>

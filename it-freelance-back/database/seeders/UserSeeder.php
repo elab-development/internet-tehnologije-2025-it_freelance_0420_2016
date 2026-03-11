@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => 'admin',
             'status' => 'active',
-            'image_url' => null,
+            'image_url' => "https://www.conteg.com/userfiles/thumbs/9/image-user18142-1740395325-2ac525f1-960x720-1.webp",
             'description' => 'Administrator sistema.',
             'skills' => null,
         ]);

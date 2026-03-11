@@ -1,6 +1,8 @@
+import { useNavigate } from "react-router-dom"
+
 export default function ClientHome() {
   const user = JSON.parse(sessionStorage.getItem("user") || "null");
-
+  const navigate = useNavigate();
   return (
     <div className="home-page">
       <div className="home-shell">
@@ -23,7 +25,7 @@ export default function ClientHome() {
             </p>
 
             <div className="hero-actions">
-              <button className="btn-primary" type="button">
+              <button className="btn-primary" type="button" onClick={() => navigate("/my-projects", { replace: true })}>
                 Kreiraj projekat
               </button>
             </div>
